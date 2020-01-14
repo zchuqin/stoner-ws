@@ -1,2 +1,6 @@
 # Project exclude paths
 /target/
+/logs/
+/.idea/
+/stoner.iml
+/dependency-reduced-pom.xml
