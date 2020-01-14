@@ -1,0 +1,70 @@
+spring:
+  profiles:
+    active: prod
+---
+spring:
+  datasource:
+    name: train
+    type: com.alibaba.druid.pool.DruidDataSource
+    druid:
+      filters: stat
+      driver-class-name: com.mysql.cj.jdbc.Driver
+      url: jdbc:mysql://127.0.0.1/train?useUnicode=true&characterEncoding=UTF-8&serverTimezone=GMT%2B8&allowMultiQueries=true
+      username: root
+      password: root
+  profiles: dev
+server:
+  port: 8081
+---
+spring:
+  datasource:
+    name: train
+    type: com.alibaba.druid.pool.DruidDataSource
+    druid:
+      filters: stat
+      driver-class-name: com.mysql.cj.jdbc.Driver
+      url: jdbc:mysql://127.0.0.1/train?useUnicode=true&characterEncoding=UTF-8&serverTimezone=GMT%2B8&allowMultiQueries=true
+      username: root
+      password: root
+  profiles: prod
+server:
+  port: 8082
+---
+spring:
+  jackson:
+    default-property-inclusion: non_null
+  datasource:
+    druid:
+      initial-size: 1
+      min-idle: 1
+      max-active: 20
+      max-wait: 60000
+      time-between-eviction-runs-millis: 60000
+      min-evictable-idle-time-millis: 300000
+      validation-query: SELECT 'x'
+      test-while-idle: true
+      test-on-borrow: false
+      test-on-return: false
+      pool-prepared-statements: false
+      max-pool-prepared-statement-per-connection-size: 20
+  security:
+    basic:
+      enabled: true
+      path: /swagger-ui.html
+    user:
+      name: admin
+      password: admin
+  rabbitmq:
+    host: 111.229.127.170
+    port: 5672
+    username: admin
+    password: admin
+
+mybatis:
+  mapper-locations: classpath:sqlmap/**/*.xml
+  type-aliases-package: com.zcq.train.pojo
+
+logging:
+  level:
+    com.zcq.train.dao: debug
+    org.springframework.security: info
