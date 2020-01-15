@@ -7,6 +7,7 @@ import org.springframework.amqp.core.TopicExchange;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.listener.SimpleMessageListenerContainer;
 import org.springframework.amqp.rabbit.listener.adapter.MessageListenerAdapter;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import stoner.component.Consumer;
@@ -35,7 +36,16 @@ public class RabbitmqConfig {
     }
 
     @Bean
-    SimpleMessageListenerContainer container(ConnectionFactory connectionFactory,
+    SimpleMessageListenerContainer container1(ConnectionFactory connectionFactory,@Qualifier(value = "listenerAdapter1")
+                                             MessageListenerAdapter listenerAdapter) {
+        SimpleMessageListenerContainer container = new SimpleMessageListenerContainer();
+        container.setConnectionFactory(connectionFactory);
+        container.setQueueNames(QUEUE_NAME);
+        container.setMessageListener(listenerAdapter);
+        return container;
+    }
+    @Bean
+    SimpleMessageListenerContainer container2(ConnectionFactory connectionFactory,@Qualifier(value = "listenerAdapter2")
                                              MessageListenerAdapter listenerAdapter) {
         SimpleMessageListenerContainer container = new SimpleMessageListenerContainer();
         container.setConnectionFactory(connectionFactory);
@@ -44,8 +54,13 @@ public class RabbitmqConfig {
         return container;
     }
 
-    @Bean
-    MessageListenerAdapter listenerAdapter(Consumer consumer) {
-        return new MessageListenerAdapter(consumer, "receiveMessage");
+    @Bean(name = "listenerAdapter1")
+    MessageListenerAdapter listenerAdapter1(Consumer consumer) {
+        return new MessageListenerAdapter(consumer, "receiveMessage1");
+    }
+
+    @Bean(name = "listenerAdapter2")
+    MessageListenerAdapter listenerAdapter2(Consumer consumer) {
+        return new MessageListenerAdapter(consumer, "receiveMessage2");
     }
 }

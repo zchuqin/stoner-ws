@@ -17,8 +17,14 @@ public class Consumer {
         return latch;
     }
 
-    public void receiveMessage(String message) {
-        logger.info("received a message : {}", message);
+    public void receiveMessage1(String message) {
+        logger.info("1. received a message : {}", message);
+        latch.countDown();
+
+    }
+
+    public void receiveMessage2(String message) {
+        logger.info("2. received a message : {}", message);
         latch.countDown();
 
     }
