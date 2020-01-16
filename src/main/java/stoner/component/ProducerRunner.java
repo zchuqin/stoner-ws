@@ -21,7 +21,6 @@ public class ProducerRunner implements CommandLineRunner {
         System.out.println("Sending message...");
         for (int i = 0; i < 100; i++) {
             rabbitTemplate.convertAndSend("stoner-exchange", "foo.bar.baz", "Hello from RabbitMQ!");
-            consumer.getLatch().await(10000, TimeUnit.MILLISECONDS);
             Thread.sleep(100);
         }
     }
