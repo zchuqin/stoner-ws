@@ -60,13 +60,12 @@ public class RabbitmqConfig {
     @Bean
     MessageListenerAdapter listenerAdapter(Consumer consumer) {
         MessageListenerAdapter listenerAdapter = new MessageListenerAdapter(consumer);
-        HashMap<String, String> Q2MN = new HashMap<>();
-        for (int i = 0; i < QUEUE_NAMES.length; i++) {
-            if (i < LISTENING_METHODS.length) {
-                Q2MN.put(QUEUE_NAMES[i], LISTENING_METHODS[i]);
-            }
+        HashMap<String, String> Q2M = new HashMap<>();
+        int min = Math.min(QUEUE_NAMES.length, LISTENING_METHODS.length);
+        for (int i = 0; i < min; i++) {
+            Q2M.put(QUEUE_NAMES[i], LISTENING_METHODS[i]);
         }
-        listenerAdapter.setQueueOrTagToMethodName(Q2MN);
+        listenerAdapter.setQueueOrTagToMethodName(Q2M);
         return listenerAdapter;
     }
 }
