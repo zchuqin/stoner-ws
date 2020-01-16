@@ -24,11 +24,6 @@ public class Consumer {
         logger.info("1. received a message : {}, countdown : {}", message, count.incrementAndGet());
     }
 
-    public void handleMessage(Message message) {
-        Object value = message.getMessageProperties().getHeader("set-key");
-        logger.info("1. received a message : {}, countdown : {},set-value : {}", new String(message.getBody()), count.incrementAndGet(),value);
-    }
-
     public void handleMessageDebug(String message) {
         logger.info("1. received a debug message : {}, countdown : {}", message, count.incrementAndGet());
     }
