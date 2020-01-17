@@ -20,7 +20,7 @@ public class ProducerRunner implements CommandLineRunner {
     public void run(String... args) throws Exception {
         System.out.println("Sending message...");
         for (int i = 0; i < 100; i++) {
-            rabbitTemplate.convertAndSend("stoner-exchange", "foo.bar.baz", "Hello from RabbitMQ!");
+            rabbitTemplate.convertAndSend("stoner-exchange", "foo.bar.baz", "[{\"name\":\"Hello from RabbitMQ!\"},{\"id\":\"hahaha\"}]");
             Thread.sleep(100);
         }
     }
