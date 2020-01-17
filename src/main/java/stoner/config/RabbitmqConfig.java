@@ -88,18 +88,39 @@ public class RabbitmqConfig {
         return listenerAdapter;
     }
 
-    @Bean("deadLetterExchange")
+    @Bean(DEAD_LETTER_EXCHANGE)
     DirectExchange deadLetterExchange() {
-        return new DirectExchange("deadLetterExchange");
+        return new DirectExchange(DEAD_LETTER_EXCHANGE);
     }
 
-        @Bean("deadLetterQueue")
+    @Bean(SCHEDULE_EXCHANGE)
+    DirectExchange scheduleExchange() {
+        return new DirectExchange(SCHEDULE_EXCHANGE);
+    }
+
+    @Bean(DEAD_LETTER_QUEUE)
     Queue deadLetterQueue() {
-        Map<String, Object> args = new HashMap<>(2);
-            args.put("x-message-ttl", 3000);
-        args.put("x-dead-letter-exchange", "deadLetterExchange");
-        args.put("x-dead-letter-routing-key", DEAD_LETTER_QUEUE);
-        return new Queue(DEAD_LETTER_QUEUE, true, false, false);
+        Map<String, Object> args = new HashMap<>(4);
+        args.put("x-message-ttl", DEAD_LETTER_QUEUE_TTL);
+        args.put("x-dead-letter-exchange", DEAD_LETTER_EXCHANGE);
+        args.put("x-dead-letter-routing-key", SCHEDULE_QUEUE);
+        Queue queue = new Queue(DEAD_LETTER_QUEUE, true, false, false, args);
+        return queue;
+    }
+
+    @Bean(SCHEDULE_QUEUE)
+    Queue scheduleQueue() {
+        return new Queue(SCHEDULE_QUEUE, true, false, false);
+    }
+
+    @Bean(SCHEDULE_BING)
+    Binding scheduleBinding() {
+        return BindingBuilder.bind(scheduleQueue()).to(deadLetterExchange()).with(SCHEDULE_QUEUE);
+    }
+
+    @Bean(DEAD_LETTER_BING)
+    Binding deadLetterBinding() {
+        return BindingBuilder.bind(deadLetterQueue()).to(scheduleExchange()).with(DEAD_LETTER_ROUTING_KEY);
     }
 
 }
