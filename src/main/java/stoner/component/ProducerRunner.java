@@ -1,5 +1,6 @@
 package stoner.component;
 
+import com.rabbitmq.client.AMQP;
 import org.springframework.amqp.core.Message;
 import org.springframework.amqp.core.MessageProperties;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
@@ -7,6 +8,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import static stoner.component.Constants.*;
@@ -28,7 +31,9 @@ public class ProducerRunner implements CommandLineRunner {
         String s = "[{\"name\":\"Hello from RabbitMQ!\"},{\"id\":\"hahaha\"}]";
         System.out.println("Sending message...");
         for (int i = 0; i < 100; i++) {
-            rabbitTemplate.convertAndSend(TOPIC_EXCHANGE_NAME, "foo.bar.baz", s);
+            MessageProperties messageProperties = new MessageProperties();
+//            messageProperties.setHeader("x-delay", 5000);
+            rabbitTemplate.send(TOPIC_EXCHANGE_NAME, ROUTING_KEY, new Message(s.getBytes(), messageProperties));
             Thread.sleep(100);
         }
         for (int i = 0; i < 40; i++) {

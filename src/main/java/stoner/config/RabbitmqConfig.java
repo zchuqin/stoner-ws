@@ -26,7 +26,10 @@ public class RabbitmqConfig {
     @Bean
     RabbitAdmin rabbitAdmin(ConnectionFactory connectionFactory) {
         RabbitAdmin rabbitAdmin = new RabbitAdmin(connectionFactory);
-        rabbitAdmin.declareExchange(new TopicExchange(TOPIC_EXCHANGE_NAME, true, false));
+        Map<String, Object> args = new HashMap<>();
+        args.put("x-delayed-type", "direct");
+        rabbitAdmin.declareExchange(new CustomExchange(TOPIC_EXCHANGE_NAME, "x-delayed-message", true, false, args));
+//        rabbitAdmin.declareExchange(new TopicExchange(TOPIC_EXCHANGE_NAME, true, false));
         for (String queueName : QUEUE_NAMES) {
             rabbitAdmin.declareQueue(new Queue(queueName, true));
             rabbitAdmin.declareBinding(
