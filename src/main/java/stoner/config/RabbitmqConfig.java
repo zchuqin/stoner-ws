@@ -1,23 +1,16 @@
 package stoner.config;
 
-import com.sun.org.apache.bcel.internal.generic.FADD;
 import org.springframework.amqp.core.*;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
-import org.springframework.amqp.rabbit.connection.CorrelationData;
 import org.springframework.amqp.rabbit.core.RabbitAdmin;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.rabbit.listener.SimpleMessageListenerContainer;
 import org.springframework.amqp.rabbit.listener.adapter.MessageListenerAdapter;
-import org.springframework.amqp.support.AmqpHeaders;
-import org.springframework.amqp.support.converter.ContentTypeDelegatingMessageConverter;
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.messaging.handler.annotation.Header;
 import stoner.component.Consumer;
 
-import javax.swing.table.TableRowSorter;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -86,41 +79,6 @@ public class RabbitmqConfig {
         }
         listenerAdapter.setQueueOrTagToMethodName(q2m);
         return listenerAdapter;
-    }
-
-    @Bean(DEAD_LETTER_EXCHANGE)
-    DirectExchange deadLetterExchange() {
-        return new DirectExchange(DEAD_LETTER_EXCHANGE);
-    }
-
-    @Bean(SCHEDULE_EXCHANGE)
-    DirectExchange scheduleExchange() {
-        return new DirectExchange(SCHEDULE_EXCHANGE);
-    }
-
-    @Bean(DEAD_LETTER_QUEUE)
-    Queue deadLetterQueue() {
-        Map<String, Object> args = new HashMap<>(4);
-        args.put("x-message-ttl", DEAD_LETTER_QUEUE_TTL);
-        args.put("x-dead-letter-exchange", DEAD_LETTER_EXCHANGE);
-        args.put("x-dead-letter-routing-key", SCHEDULE_QUEUE);
-        Queue queue = new Queue(DEAD_LETTER_QUEUE, true, false, false, args);
-        return queue;
-    }
-
-    @Bean(SCHEDULE_QUEUE)
-    Queue scheduleQueue() {
-        return new Queue(SCHEDULE_QUEUE, true, false, false);
-    }
-
-    @Bean(SCHEDULE_BING)
-    Binding scheduleBinding() {
-        return BindingBuilder.bind(scheduleQueue()).to(deadLetterExchange()).with(SCHEDULE_QUEUE);
-    }
-
-    @Bean(DEAD_LETTER_BING)
-    Binding deadLetterBinding() {
-        return BindingBuilder.bind(deadLetterQueue()).to(scheduleExchange()).with(DEAD_LETTER_ROUTING_KEY);
     }
 
 }
