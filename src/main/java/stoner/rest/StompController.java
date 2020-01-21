@@ -3,7 +3,6 @@ package stoner.rest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.event.EventListener;
 import org.springframework.messaging.MessageHeaders;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
@@ -12,11 +11,6 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.stereotype.Controller;
 import org.springframework.util.StringUtils;
-import org.springframework.web.socket.WebSocketSession;
-import org.springframework.web.socket.messaging.SessionConnectedEvent;
-import org.springframework.web.socket.messaging.SessionDisconnectEvent;
-import org.springframework.web.socket.messaging.SessionSubscribeEvent;
-import org.springframework.web.socket.messaging.SessionUnsubscribeEvent;
 import stoner.bean.MessageVo;
 
 import java.security.Principal;
@@ -66,13 +60,13 @@ public class StompController {
     @MessageMapping("/good/{isBoardcast}/{goodNo}")
     public void publish(@Payload MessageVo messageVo, @DestinationVariable String isBoardcast, @DestinationVariable String goodNo,StompHeaderAccessor accessor) {
         String destination;
-        if ("all".equals(isBoardcast)) {
+//        if ("all".equals(isBoardcast)) {
             destination = "/topic/public";
-        } else if ("one".equals(isBoardcast)) {
-            destination = "/topic/" + goodNo;
-        } else {
-            return;
-        }
+//        } else if ("one".equals(isBoardcast)) {
+//            destination = "/topic/" + goodNo;
+//        } else {
+//            return;
+//        }
         String name = messageVo.getName();
         if (StringUtils.isEmpty(name)) {
             name += ", uuid : ";
@@ -80,12 +74,17 @@ public class StompController {
             name = "uuid : ";
         }
         Principal user = accessor.getUser();
-        String passcode = accessor.getPasscode();
         if (user != null) {
             name += user.getName();
+            messageVo.setName(name);
         }
-        messageVo.setName(name);
-        template.convertAndSend(destination, messageVo);
+        String passcode = accessor.getPasscode();
+        logger.info("passcode: {}",passcode);
+        if ("one".equals(isBoardcast) && user != null) {
+            template.convertAndSendToUser(user.getName(),destination, messageVo);
+        } else {
+            template.convertAndSend(destination, messageVo);
+        }
     }
 
 }

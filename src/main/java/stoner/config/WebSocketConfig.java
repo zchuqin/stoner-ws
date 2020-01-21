@@ -1,18 +1,19 @@
 package stoner.config;
 
-import com.alibaba.fastjson.JSON;
-import org.apache.catalina.manager.util.SessionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cache.Cache;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
 import org.springframework.http.server.ServerHttpRequest;
 import org.springframework.http.server.ServerHttpResponse;
 import org.springframework.http.server.ServletServerHttpRequest;
+import org.springframework.messaging.Message;
 import org.springframework.messaging.simp.SimpMessageType;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
+import org.springframework.messaging.simp.stomp.StompDecoder;
+import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
+import org.springframework.messaging.support.MessageHeaderAccessor;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.WebSocketHandler;
 import org.springframework.web.socket.WebSocketMessage;
@@ -26,14 +27,14 @@ import org.springframework.web.socket.handler.WebSocketHandlerDecoratorFactory;
 import org.springframework.web.socket.server.HandshakeHandler;
 import org.springframework.web.socket.server.HandshakeInterceptor;
 import org.springframework.web.socket.server.support.DefaultHandshakeHandler;
-import stoner.bean.FrameVo;
 import stoner.bean.MyPrincipal;
 import stoner.utils.SessionUtil;
 
+import java.nio.ByteBuffer;
 import java.security.Principal;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * 开启WebSocket支持
@@ -88,6 +89,26 @@ public class    WebSocketConfig implements WebSocketMessageBrokerConfigurer {
             }
         };
     }
+//
+//    @Override
+//    public void configureClientInboundChannel(ChannelRegistration registration) {
+//        registration.setInterceptors(new ChannelInterceptorAdapter() {
+//            @Override
+//            public Message<?> preSend(Message<?> message, MessageChannel channel) {
+//                StompHeaderAccessor accessor =
+//                        MessageHeaderAccessor.getAccessor(message, StompHeaderAccessor.class);
+//                //1. 判断是否首次连接请求
+//                if (StompCommand.CONNECT.equals(accessor.getCommand())) {
+//                    //2. 验证是否登录
+//                    String username = accessor.getNativeHeader("username").get(0);
+//                    String password = accessor.getNativeHeader("password").get(0);
+//                    return null;
+//                }
+//                //不是首次连接，已经成功登陆
+//                return message;
+//            }
+//        });
+//    }
 
     private HandshakeInterceptor notifyHandshakeInterceptor() {
         return new HandshakeInterceptor() {
@@ -96,21 +117,23 @@ public class    WebSocketConfig implements WebSocketMessageBrokerConfigurer {
             public boolean beforeHandshake(ServerHttpRequest serverHttpRequest, ServerHttpResponse serverHttpResponse, WebSocketHandler webSocketHandler, Map<String, Object> map) throws Exception {
                 ServletServerHttpRequest req = (ServletServerHttpRequest) serverHttpRequest;
                 //通过url的query参数获取认证参数
-                String token = req.getServletRequest().getParameter("token");
-                if (token == null) {
-                    token = UUID.randomUUID().toString();
-                } else {
-                    logger.info("用户身份token:{}",token);
+                String login = req.getServletRequest().getParameter("login");
+                String passcode = req.getServletRequest().getParameter("passcode");
+
+                if (login == null) {
+                    login = UUID.randomUUID().toString();
                 }
-                //根据token认证用户，不通过返回拒绝握手
-//                Principal user = authenticate(token);
-                Principal user = new MyPrincipal(token);
+                logger.info("用户username:{}",login);
+                //根据login+passcode认证用户，不通过返回拒绝握手
+//                Principal user = authenticate(login,passcode);
+                Principal user = new MyPrincipal(login);
                 if(user == null){
-                    logger.warn("用户身份token:{}，身份验证错误或者用户未登录！",token);
+                    logger.warn("用户username:{}，身份验证错误或者用户未登录！",login);
                     return false;
                 }
                 //保存认证用户
                 map.put("currentUser", user);
+                map.put("passcode", "gggggiebb93b878v4");
                 return true;
             }
 
@@ -138,30 +161,50 @@ public class    WebSocketConfig implements WebSocketMessageBrokerConfigurer {
                     public void handleMessage(WebSocketSession session, WebSocketMessage<?> message) throws Exception {
                         logSession("处理消息",logger, session);
                         if (message.getPayload() instanceof String) {
-                            FrameVo frameVo = new FrameVo((String) message.getPayload());
-                            logger.info("frame >>> {}",JSON.toJSONString(frameVo));
-                            if (SimpMessageType.SUBSCRIBE.toString().equals(frameVo.getType())) {
-                                String destination = frameVo.getHeaders().getFirst("destination");
-                                if (SessionUtil.cacheSubscription(destination, session)) {
-                                    logger.info("已经订阅过了 : {}",destination);
-                                    return;
+                            ByteBuffer byteBuffer = ByteBuffer.wrap(((String)(message.getPayload())).getBytes());
+                            List<Message<byte[]>> messages = new StompDecoder().decode(byteBuffer);
+                            for (Message<byte[]> message1 : messages) {
+                                StompHeaderAccessor headerAccessor = MessageHeaderAccessor.getAccessor(message1, StompHeaderAccessor.class);
+                                if (headerAccessor == null) {continue;}
+                                SimpMessageType simpMessageType = headerAccessor.getMessageType();
+                                if (simpMessageType == null) {continue;}
+                                switch (simpMessageType) {
+                                    case SUBSCRIBE:
+                                        String simpDestination = headerAccessor.getDestination();
+                                        if (simpDestination != null && SessionUtil.cacheSubscription(simpDestination, session)) {
+                                            logger.info("已经订阅过了 : {}",simpDestination);
+                                            return;
+                                        }
+                                        break;
+                                    case CONNECT:
+                                        String passcode = headerAccessor.getFirstNativeHeader("login");
+                                        if (passcode != null) {
+                                            logger.info("passcode: {}", passcode);
+                                        } else {
+                                            logger.info("connect: no passcode");
+                                        }
+                                        break;
+                                    case MESSAGE:
+                                        break;
+                                    case HEARTBEAT:
+                                        break;
+                                    default:
                                 }
                             }
                         }
+
                         super.handleMessage(session, message);
                     }
 
                     @Override
                     public void handleTransportError(WebSocketSession session, Throwable exception) throws Exception {
                         logSession("异常，关闭连接",logger, session);
-                        SessionUtil.afterConnectionClosed(session);
                         super.handleTransportError(session, exception);
                     }
 
                     @Override
                     public void afterConnectionClosed(WebSocketSession session, CloseStatus closeStatus) throws Exception {
                         logSession("连接已关闭",logger, session);
-                        SessionUtil.afterConnectionClosed(session);
                         super.afterConnectionClosed(session, closeStatus);
                     }
                 };
