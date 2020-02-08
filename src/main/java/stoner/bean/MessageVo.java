@@ -37,4 +37,13 @@ public class MessageVo {
     public void setContent(String content) {
         this.content = content;
     }
+
+    @Override
+    public String toString() {
+        return "MessageVo{" +
+                "name='" + name + '\'' +
+                ", target='" + target + '\'' +
+                ", content='" + content + '\'' +
+                '}';
+    }
 }

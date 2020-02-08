@@ -23,9 +23,9 @@ spring:
     druid:
       filters: stat
       driver-class-name: com.mysql.cj.jdbc.Driver
-      url: jdbc:mysql://127.0.0.1/train?useUnicode=true&characterEncoding=UTF-8&serverTimezone=GMT%2B8&allowMultiQueries=true
+      url: jdbc:mysql://111.229.208.117/train?useUnicode=true&characterEncoding=UTF-8&serverTimezone=GMT%2B8&allowMultiQueries=true
       username: root
-      password: root
+      password: Uuwv123
   profiles: prod
 server:
   port: 8082
@@ -59,12 +59,19 @@ spring:
     port: 5672
     username: admin
     password: admin
-
 mybatis:
   mapper-locations: classpath:sqlmap/**/*.xml
   type-aliases-package: com.zcq.train.pojo
-
 logging:
   level:
     com.zcq.train.dao: debug
     org.springframework.security: info
+stoner:
+  tack: 7369
+  categorys:
+    - language
+    - timezone
+    - country
+  msg:
+    - {name: uis, target: ii9, content: 善良的规划}
+    - {name: undsifg, target: cu83hj, content: 㑦塑料袋f}
